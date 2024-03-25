@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from model import db, User, Service, Review
+from models import db, User, Service, Review 
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, TextAreaField
 from wtforms.validators import InputRequired, NumberRange
