@@ -5,51 +5,30 @@ db = SQLAlchemy()
 
 class User(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    reviews = db.relationship("Review", back_populates="user")
 
     def __repr__(self):
-        return f'<User {self.username}>'
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'username': self.username
-        }
+        return f"User(id={self.id}, username={self.username})"
 
 class Service(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), nullable=False)
+    reviews = db.relationship("Review", back_populates="service")
 
     def __repr__(self):
-        return f'<Service {self.name}>'
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'category': self.category
-        }
+        return f"Service(id={self.id}, name={self.name}, category={self.category})"
 
 class Review(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
     rating = db.Column(db.Integer, nullable=False)
-    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
+    comment = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    service = db.relationship('Service', backref=db.backref('reviews', lazy=True))
-    user = db.relationship('User', backref=db.backref('reviews', lazy=True))
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
+    user = db.relationship("User", back_populates="reviews")
+    service = db.relationship("Service", back_populates="reviews")
 
     def __repr__(self):
-        return f'<Review {self.content}>'
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'content': self.content,
-            'rating': self.rating,
-            'service_id': self.service_id,
-            'user_id': self.user_id
-        }
+        return f"Review(id={self.id}, rating={self.rating}, comment={self.comment})"
