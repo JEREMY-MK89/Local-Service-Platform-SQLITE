@@ -1,22 +1,23 @@
-import os
-from flask import Flask, request, session, jsonify
+from flask import Flask, jsonify, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, TextAreaField
 from wtforms.validators import InputRequired, Length
 from flask_cors import CORS
-from models import User, Service, Review
+from flask_migrate import Migrate
+import os  # Import os module
 
 app = Flask(__name__)
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///server/db/app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = os.urandom(24)  # Generate a new secret key every time the application runs
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(app)  # Initialize SQLAlchemy instance with the app context
+migrate = Migrate(app, db)
 api = Api(app)
 
-# Define WTForms for input validation
 class ServiceForm(FlaskForm):
     name = StringField('Name', validators=[InputRequired(), Length(min=1, max=100)])
     category = StringField('Category', validators=[InputRequired(), Length(min=1, max=50)])
@@ -25,7 +26,6 @@ class ReviewForm(FlaskForm):
     content = TextAreaField('Content', validators=[InputRequired()])
     rating = IntegerField('Rating', validators=[InputRequired()])
 
-# Your resources (API endpoints) go here
 class Signup(Resource):
     def post(self):
         # Your signup logic here
@@ -48,35 +48,72 @@ class CheckSession(Resource):
             user = User.query.get(user_id)
             if user:
                 return jsonify(user.serialize())
-        return jsonify({}), 204  # Return empty response with status code 204 if user not authenticated
+        return jsonify({}), 204
 
 class ServiceResource(Resource):
-    def get(self, id):
-        # Your get service logic here
-        return jsonify({'message': f'Get service {id}'}), 200
+    def get(self, id=None):
+        if id:
+            service = Service.query.get(id)
+            if service:
+                return jsonify(service.serialize()), 200
+            return jsonify({'message': 'Service not found'}), 404
+        else:
+            services = Service.query.all()
+            return jsonify([service.serialize() for service in services]), 200
 
     def post(self):
-        # Your create service logic here
         form = ServiceForm(request.form)
         if form.validate():
-            # Process form data and create service
-            return jsonify({'message': 'Create service'}), 201
+            name = form.name.data
+            category = form.category.data
+            service = Service(name=name, category=category)
+            db.session.add(service)
+            db.session.commit()
+            return jsonify({'message': 'Service created successfully', 'service_id': service.id}), 201
         return jsonify({'message': 'Validation error'}), 400
 
     def put(self, id):
         # Your update service logic here
-        return jsonify({'message': f'Update service {id}'}), 200
+        service = Service.query.get(id)
+        if not service:
+            return jsonify({'message': 'Service not found'}), 404
+        form = ServiceForm(request.form)
+        if form.validate():
+            service.name = form.name.data
+            service.category = form.category.data
+            db.session.commit()
+            return jsonify({'message': 'Service updated successfully'}), 200
+        return jsonify({'message': 'Validation error'}), 400
 
     def delete(self, id):
-        # Your delete service logic here
-        return jsonify({'message': f'Delete service {id}'}), 200
+        service = Service.query.get(id)
+        if service:
+            db.session.delete(service)
+            db.session.commit()
+            return jsonify({'message': 'Service deleted successfully'}), 200
+        return jsonify({'message': 'Service not found'}), 404
 
-# Add resources to API endpoints
 api.add_resource(Signup, '/signup')
 api.add_resource(Login, '/login')
 api.add_resource(Logout, '/logout')
 api.add_resource(CheckSession, '/check_session')
-api.add_resource(ServiceResource, '/services/<int:id>', '/services')
+api.add_resource(ServiceResource, '/services', '/services/<int:id>')
+
+@app.route('/')
+def home():
+    return jsonify({'message': 'Welcome to the home page'})
+
+@app.route('/dashboard')
+def dashboard():
+    return jsonify({'message': 'Welcome to the dashboard'})
+
+@app.route('/profile')
+def profile():
+    return jsonify({'message': 'Welcome to the profile'})
+
+@app.route('/navigation')
+def navigation():
+    return jsonify({'message': 'This is a UI element for navigation'})
 
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    app.run(debug=True)
