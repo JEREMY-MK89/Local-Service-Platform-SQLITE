@@ -12,6 +12,13 @@ class User(db.Model, SerializerMixin):
     def __repr__(self):
         return f"User(id={self.id}, username={self.username})"
 
+    def serialize(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'password': self.password  # Note: You may want to exclude password for security reasons
+        }
+
 class Service(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -20,6 +27,13 @@ class Service(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f"Service(id={self.id}, name={self.name}, category={self.category})"
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'category': self.category
+        }
 
 class Review(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -32,3 +46,12 @@ class Review(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f"Review(id={self.id}, rating={self.rating}, comment={self.comment})"
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'rating': self.rating,
+            'comment': self.comment,
+            'user_id': self.user_id,
+            'service_id': self.service_id
+        }

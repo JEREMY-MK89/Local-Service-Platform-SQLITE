@@ -1,20 +1,15 @@
 from flask import Flask, request, jsonify
+from flask_migrate import Migrate 
 from flask_cors import CORS
 from models import db, User, Service, Review 
-from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, TextAreaField
-from wtforms.validators import InputRequired, NumberRange
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your_secret_key'
 CORS(app)
+migrate = Migrate(app, db)
 db.init_app(app)
-
-class ReviewForm(FlaskForm):
-    rating = IntegerField('Rating', validators=[InputRequired(), NumberRange(min=1, max=5)])
-    comment = TextAreaField('Comment')
 
 # Routes for user authentication (sign up, log in, log out)
 @app.route('/signup', methods=['POST'])
@@ -58,8 +53,10 @@ def delete_service(service_id):
 @app.route('/services/<int:service_id>/reviews', methods=['GET'])
 def get_reviews(service_id):
     # Implement logic to get all reviews for a service
-    reviews = Review.query.filter_by(service_id=service_id).all()
-    return jsonify([review.serialize() for review in reviews]), 200
+    service = Service.query.get(service_id)
+    if not service:
+        return jsonify({'error': 'Service not found'}), 404
+    return jsonify([review.serialize() for review in service.reviews]), 200
 
 @app.route('/services/<int:service_id>/reviews', methods=['POST'])
 def create_review(service_id):
