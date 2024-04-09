@@ -33,7 +33,11 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message': 'User signed up successfully'}), 200
+    # Return the user data after signing up
+    return jsonify({
+        'id': new_user.id,
+        'username': new_user.username
+    }), 200
 
 @app.route('/login', methods=['POST'])
 def login():
