@@ -1,12 +1,13 @@
 from app import app, db
 from models import User, Service, Review
+from werkzeug.security import generate_password_hash
 
 def seed_data():
     with app.app_context():
-        # Create users
-        user1 = User(username='user1', password='password1')
-        user2 = User(username='user2', password='password2')
-        user3 = User(username='user3', password='password3')
+        # Create users with password hash
+        user1 = User(username='user1', password_hash=generate_password_hash('password1'))
+        user2 = User(username='user2', password_hash=generate_password_hash('password2'))
+        user3 = User(username='user3', password_hash=generate_password_hash('password3'))
 
         db.session.add_all([user1, user2, user3])
         db.session.commit()
