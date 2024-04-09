@@ -1,12 +1,16 @@
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
-from models import db, User, Service, Review 
+from flask_cors import CORS  # Import CORS
+from models import db, User, Service, Review
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your_secret_key'
+
+# Initialize CORS with default options
+CORS(app)
 
 migrate = Migrate(app, db)
 db.init_app(app)
@@ -31,7 +35,6 @@ def signup():
 
     return jsonify({'message': 'User signed up successfully'}), 200
 
-
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -47,7 +50,7 @@ def login():
 
     return jsonify({'message': 'User logged in successfully'}), 200
 
-@app.route('/logout', methods=['GET'])
+@app.route('/logout', methods=['DELETE'])
 def logout():
     # Implement user logout logic here
     return jsonify({'message': 'User logged out successfully'}), 200
